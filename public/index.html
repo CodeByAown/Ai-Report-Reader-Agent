@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Hub — Medical Report Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:       #0B1E3E;
+      --navy-mid:   #122B56;
+      --navy-light: #1A3A6B;
+      --blue:       #2563EB;
+      --blue-light: #EFF6FF;
+      --blue-mid:   #BFDBFE;
+      --teal:       #0D9488;
+      --teal-light: #F0FDFA;
+      --red:        #DC2626;
+      --red-light:  #FEF2F2;
+      --red-mid:    #FECACA;
+      --orange:     #D97706;
+      --orange-light: #FFFBEB;
+      --orange-mid: #FDE68A;
+      --green:      #059669;
+      --green-light:#F0FDF4;
+      --green-mid:  #BBF7D0;
+      --gray-50:    #F8FAFC;
+      --gray-100:   #F1F5F9;
+      --gray-200:   #E2E8F0;
+      --gray-300:   #CBD5E1;
+      --gray-400:   #94A3B8;
+      --gray-500:   #64748B;
+      --gray-600:   #475569;
+      --gray-700:   #334155;
+      --gray-800:   #1E293B;
+      --gray-900:   #0F172A;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow:     0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+      --shadow-lg:  0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08);
+      --radius:     14px;
+      --radius-sm:  8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      padding: 0 28px;
+      height: 66px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #3B82F6 0%, #0D9488 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+    }
+
+    .logo-icon svg { width: 22px; height: 22px; }
+
+    .logo-text { display: flex; flex-direction: column; }
+    .logo-name { font-size: 16px; font-weight: 800; color: white; letter-spacing: -0.3px; line-height: 1.2; }
+    .logo-tagline { font-size: 10.5px; color: rgba(255,255,255,0.5); letter-spacing: 0.8px; text-transform: uppercase; }
+
+    .header-spacer { flex: 1; }
+
+    .header-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.8);
+      gap: 6px;
+    }
+
+    .badge-dot {
+      width: 7px; height: 7px;
+      background: #4ADE80;
+      border-radius: 50%;
+      animation: pulse-green 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ── Main Layout ── */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ── Hero Section ── */
+    .hero {
+      padding: 40px 0 28px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid var(--blue-mid);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 {
+      font-size: clamp(24px, 3.5vw, 34px);
+      font-weight: 800;
+      color: var(--gray-900);
+      letter-spacing: -0.6px;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 span { color: var(--blue); }
+
+    .hero p {
+      font-size: 15px;
+      color: var(--gray-500);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── Upload Card ── */
+    .upload-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 28px;
+      border: 1px solid var(--gray-200);
+    }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin: 0 auto 24px;
+      max-width: 380px;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex: 1;
+      position: relative;
+    }
+
+    /* Connector line drawn between the two circles */
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: calc(50% + 16px);
+      right: calc(-50% + 16px);
+      height: 2px;
+      background: var(--gray-200);
+    }
+
+    .step.active:not(:last-child)::after,
+    .step.done:not(:last-child)::after {
+      background: linear-gradient(90deg, var(--blue) 0%, var(--gray-200) 100%);
+    }
+
+    .step.done:not(:last-child)::after {
+      background: var(--green);
+    }
+
+    .step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: var(--gray-100);
+      color: var(--gray-400);
+      border: 2px solid var(--gray-200);
+      transition: all 0.3s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step.active .step-num {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
+    }
+
+    .step.done .step-num {
+      background: var(--green);
+      color: white;
+      border-color: var(--green);
+    }
+
+    .step-processing .step-num {
+      animation: pulse-blue 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-blue {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
+      50% { box-shadow: 0 0 0 8px rgba(37,99,235,0.08); }
+    }
+
+    .step-label { font-size: 12px; font-weight: 600; color: var(--gray-400); white-space: nowrap; text-align: center; }
+    .step.active .step-label { color: var(--blue); }
+    .step.done .step-label { color: var(--green); }
+
+    /* Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--gray-200);
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      background: var(--gray-50);
+    }
+
+    .drop-zone:hover { border-color: var(--blue); background: var(--blue-light); }
+    .drop-zone.dragover { border-color: var(--blue); background: var(--blue-light); box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+    .drop-zone.has-file { border-style: solid; border-color: var(--blue); background: var(--blue-light); }
+
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    .drop-icon-wrap {
+      width: 60px; height: 60px;
+      background: white;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+      transition: all 0.25s;
+    }
+
+    .drop-zone:hover .drop-icon-wrap,
+    .drop-zone.dragover .drop-icon-wrap { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+    .drop-icon-wrap svg { width: 28px; height: 28px; }
+
+    .drop-zone h3 { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 5px; }
+    .drop-zone h3 span { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
+    .drop-zone p { font-size: 13px; color: var(--gray-500); }
+
+    .format-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px;
+    }
+
+    .format-chip {
+      padding: 3px 9px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-500);
+    }
+
+    /* File Preview */
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--blue-light);
+      border: 1px solid var(--blue-mid);
+      border-radius: 10px;
+      margin-top: 14px;
+    }
+
+    .file-info.visible { display: flex; }
+
+    .file-type-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .file-type-pdf { background: #FEE2E2; color: #DC2626; }
+    .file-type-img { background: #D1FAE5; color: #059669; }
+    .file-type-doc { background: #DBEAFE; color: #2563EB; }
+
+    .file-meta { flex: 1; min-width: 0; }
+    .file-name { font-size: 14px; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 12px; color: var(--gray-500); margin-top: 1px; }
+
+    .file-remove {
+      width: 28px; height: 28px;
+      border: none; background: none; cursor: pointer;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray-400);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .file-remove:hover { background: rgba(220,38,38,0.1); color: var(--red); }
+    .file-remove svg { width: 16px; height: 16px; }
+
+    /* Analyze Button */
+    .analyze-btn {
+      width: 100%; margin-top: 16px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--blue) 0%, #1D4ED8 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.25s;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+      letter-spacing: -0.1px;
+    }
+
+    .analyze-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.45);
+    }
+
+    .analyze-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .analyze-btn svg { width: 18px; height: 18px; }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading .spinner { display: block; }
+    .loading .btn-icon { display: none; }
+    .loading .btn-label::after { content: '…'; }
+
+    /* Error */
+    .error-box {
+      display: none;
+      background: var(--red-light);
+      border: 1px solid var(--red-mid);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: var(--red);
+      line-height: 1.5;
+    }
+
+    .error-box.visible { display: flex; gap: 10px; align-items: flex-start; }
+    .error-box svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Results ── */
+    #results { display: none; animation: fadeUp 0.4s ease; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Urgency Banner */
+    .urgency-bar {
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+    }
+
+    .urgency-NORMAL  { background: var(--green-light); border-color: var(--green-mid); }
+    .urgency-ATTENTION { background: var(--orange-light); border-color: var(--orange-mid); }
+    .urgency-URGENT  { background: var(--red-light); border-color: var(--red-mid); animation: urgentPulse 2s ease-in-out 3; }
+
+    @keyframes urgentPulse {
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: 0 0 0 4px rgba(220,38,38,0.15); }
+    }
+
+    .urgency-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .urgency-NORMAL .urgency-icon { background: var(--green-mid); }
+    .urgency-ATTENTION .urgency-icon { background: var(--orange-mid); }
+    .urgency-URGENT .urgency-icon { background: var(--red-mid); }
+    .urgency-icon svg { width: 18px; height: 18px; }
+
+    .urgency-text h3 { font-size: 15px; font-weight: 700; }
+    .urgency-NORMAL .urgency-text h3 { color: var(--green); }
+    .urgency-ATTENTION .urgency-text h3 { color: var(--orange); }
+    .urgency-URGENT .urgency-text h3 { color: var(--red); }
+    .urgency-text p { font-size: 12.5px; margin-top: 1px; color: var(--gray-600); }
+
+    .urgency-meta { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+    .meta-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .meta-pill-gray { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .meta-pill-blue { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
+    .meta-pill-teal { background: var(--teal-light); color: var(--teal); border: 1px solid #99F6E4; }
+
+    /* Results Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .col-4  { grid-column: span 4; }
+    .col-5  { grid-column: span 5; }
+    .col-6  { grid-column: span 6; }
+    .col-7  { grid-column: span 7; }
+    .col-8  { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+
+    @media (max-width: 860px) {
+      .col-4, .col-5, .col-6, .col-7, .col-8 { grid-column: span 12; }
+    }
+
+    /* Card */
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 13px 18px 11px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card-header-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-header-icon svg { width: 15px; height: 15px; }
+
+    .icon-blue { background: var(--blue-light); }
+    .icon-blue svg { stroke: var(--blue); fill: none; }
+    .icon-red { background: var(--red-light); }
+    .icon-red svg { stroke: var(--red); fill: none; }
+    .icon-teal { background: var(--teal-light); }
+    .icon-teal svg { stroke: var(--teal); fill: none; }
+    .icon-orange { background: var(--orange-light); }
+    .icon-orange svg { stroke: var(--orange); fill: none; }
+    .icon-green { background: var(--green-light); }
+    .icon-green svg { stroke: var(--green); fill: none; }
+    .icon-purple { background: #F3E8FF; }
+    .icon-purple svg { stroke: #7C3AED; fill: none; }
+
+    .card-title { font-size: 12px; font-weight: 700; color: var(--gray-700); letter-spacing: 0.4px; text-transform: uppercase; }
+
+    .card-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .card-body { padding: 16px 18px; }
+
+    /* Summary Card */
+    .summary-text {
+      font-size: 15px; line-height: 1.7; color: var(--gray-700);
+      border-left: 3px solid var(--blue);
+      padding-left: 14px;
+    }
+
+    /* Patient Info */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 400px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-item {}
+    .info-label { font-size: 10.5px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .info-value { font-size: 13.5px; color: var(--gray-800); font-weight: 500; }
+    .info-value.prominent { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+
+    /* Report Type Badge */
+    .report-type-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      background: var(--blue-light);
+      border: 1px solid var(--blue-mid);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+
+    /* Diagnosis */
+    .diagnosis-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--gray-800);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* Critical Values */
+    .critical-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 12px;
+      background: var(--red-light);
+      border: 1px solid var(--red-mid);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13.5px;
+      color: var(--red);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .critical-item:last-child { margin-bottom: 0; }
+    .critical-item::before { content: '⚠'; flex-shrink: 0; font-size: 14px; }
+
+    /* Findings List */
+    .findings-list { list-style: none; }
+    .findings-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13.5px; color: var(--gray-700);
+      line-height: 1.5;
+    }
+    .findings-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .findings-list li::before { content: ''; width: 7px; height: 7px; background: var(--blue); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+    /* Recommendations List */
+    .recs-list { list-style: none; }
+    .recs-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13.5px; color: var(--gray-700);
+      line-height: 1.5;
+    }
+    .recs-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .recs-list li::before { content: '→'; color: var(--teal); font-weight: 700; flex-shrink: 0; }
+
+    /* Medications */
+    .med-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .med-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 11px;
+      background: #F3E8FF;
+      border: 1px solid #DDD6FE;
+      border-radius: 20px;
+      font-size: 12.5px; font-weight: 600; color: #5B21B6;
+    }
+
+    /* Lab Values Table */
+    .lab-table-scroll { overflow-x: auto; }
+    .lab-table { width: 100%; border-collapse: collapse; min-width: 360px; }
+    .lab-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--gray-50);
+      border-bottom: 2px solid var(--gray-200);
+    }
+    .lab-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-700);
+    }
+    .lab-table tr:last-child td { border-bottom: none; }
+    .lab-table tr:hover td { background: var(--gray-50); }
+
+    .lab-status {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .status-normal  { background: var(--green-light); color: var(--green); }
+    .status-high    { background: var(--red-light); color: var(--red); }
+    .status-low     { background: var(--blue-light); color: var(--blue); }
+    .status-critical { background: var(--red); color: white; }
+    .status-unknown { background: var(--gray-100); color: var(--gray-500); }
+
+    /* Raw Text Accordion */
+    .raw-accordion {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .raw-toggle {
+      width: 100%; background: none; border: none;
+      padding: 14px 18px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      text-align: left;
+      transition: background 0.2s;
+    }
+    .raw-toggle:hover { background: var(--gray-50); }
+
+    .raw-toggle-title { font-size: 12px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+    .raw-chars { font-size: 11px; color: var(--gray-400); font-weight: 500; }
+    .raw-chevron { width: 18px; height: 18px; flex-shrink: 0; stroke: var(--gray-400); fill: none; transition: transform 0.25s; }
+    .raw-toggle.open .raw-chevron { transform: rotate(180deg); }
+
+    .raw-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--gray-100); }
+    .raw-body.visible { display: block; }
+    .raw-body pre { font-size: 12px; line-height: 1.65; color: var(--gray-600); white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow-y: auto; padding-top: 16px; }
+
+    /* Actions Bar */
+    .actions-bar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      padding: 20px 0 40px;
+      justify-content: flex-end;
+    }
+
+    .btn-action {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-action svg { width: 16px; height: 16px; }
+
+    .btn-outline {
+      background: white;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-outline:hover { background: var(--gray-50); border-color: var(--gray-300); }
+
+    .btn-primary-sm {
+      background: var(--navy);
+      color: white;
+    }
+    .btn-primary-sm:hover { background: var(--navy-light); }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 14px 0 4px;
+      color: var(--gray-400);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* Data quality indicator */
+    .quality-HIGH   { background: var(--green-light); color: var(--green); }
+    .quality-PARTIAL { background: var(--orange-light); color: var(--orange); }
+    .quality-LIMITED { background: var(--gray-100); color: var(--gray-500); }
+
+    /* AI Inferred indicators */
+    .ai-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px;
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #C2410C;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .ai-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13.5px; color: var(--gray-600);
+      line-height: 1.5;
+      font-style: italic;
+    }
+    .ai-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .ai-item::before { content: '→'; color: #F97316; font-weight: 700; flex-shrink: 0; font-style: normal; }
+    .ai-item-badge {
+      display: inline-flex; align-items: center;
+      padding: 1px 6px;
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #C2410C;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-style: normal;
+    }
+
+    .ai-med-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 11px;
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 20px;
+      font-size: 12.5px; font-weight: 600; color: #C2410C;
+      font-style: italic;
+    }
+
+    .diagnosis-ai {
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #92400E;
+      font-weight: 500;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* Disclaimer */
+    .disclaimer-box {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-left: 4px solid #D97706;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .disclaimer-box svg { width: 20px; height: 20px; flex-shrink: 0; stroke: #D97706; fill: none; margin-top: 1px; }
+    .disclaimer-content {}
+    .disclaimer-title { font-size: 12.5px; font-weight: 800; color: #92400E; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .disclaimer-text { font-size: 12.5px; color: #78350F; line-height: 1.55; }
+
+    /* Print styles */
+    @media print {
+      .header, .hero, .upload-card, .actions-bar, .raw-accordion { display: none !important; }
+      #results { display: block !important; }
+      body { background: white; }
+      .urgency-bar { border: 2px solid #999; }
+      .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <a class="header-logo" href="#">
+    <div class="logo-icon">
+      <!-- Neural Hub logo: hexagonal neural network -->
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="18,2 31,9.5 31,26.5 18,34 5,26.5 5,9.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" fill="none"/>
+        <circle cx="18" cy="18" r="3.5" fill="white"/>
+        <circle cx="9.5" cy="13" r="2" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="26.5" cy="13" r="2" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="9.5" cy="23" r="2" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="26.5" cy="23" r="2" fill="rgba(255,255,255,0.85)"/>
+        <circle cx="18" cy="5" r="1.8" fill="rgba(255,255,255,0.7)"/>
+        <circle cx="18" cy="31" r="1.8" fill="rgba(255,255,255,0.7)"/>
+        <line x1="18" y1="18" x2="9.5" y2="13" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <line x1="18" y1="18" x2="26.5" y2="13" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <line x1="18" y1="18" x2="9.5" y2="23" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <line x1="18" y1="18" x2="26.5" y2="23" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <line x1="18" y1="18" x2="18" y2="5" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="18" y1="18" x2="18" y2="31" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <line x1="9.5" y1="13" x2="26.5" y2="23" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+        <line x1="26.5" y1="13" x2="9.5" y2="23" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-name">Neural Hub</span>
+      <span class="logo-tagline">Medical Intelligence</span>
+    </div>
+  </a>
+  <div class="header-spacer"></div>
+  <div class="header-badge">
+    <div class="badge-dot"></div>
+    AI Agent Online
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Powered by GPT-4o + Kreuzberg OCR
+    </div>
+    <h1>Medical Report <span>AI Summarization</span></h1>
+    <p>Upload any medical report — lab results, prescriptions, handwritten notes, discharge summaries — and get an instant clinical summary.</p>
+  </div>
+
+  <!-- Upload Card -->
+  <div class="upload-card">
+    <!-- Steps Indicator -->
+    <div class="steps" id="stepsBar">
+      <div class="step active" id="step1">
+        <div class="step-num">1</div>
+        <div class="step-label">Upload Report</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-num">2</div>
+        <div class="step-label">Extract Text</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-num">3</div>
+        <div class="step-label">AI Analysis</div>
+      </div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif,.bmp,.webp,.gif,.docx,.doc,.xlsx" />
+      <div class="drop-icon-wrap">
+        <!-- Upload cloud icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16"></polyline>
+          <line x1="12" y1="12" x2="12" y2="21"></line>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+        </svg>
+      </div>
+      <h3><span>Click to upload</span> or drag & drop</h3>
+      <p>Supports scanned reports, handwritten notes, lab results, X-ray reports &amp; more</p>
+      <div class="format-chips">
+        <span class="format-chip">PDF</span>
+        <span class="format-chip">JPG / PNG</span>
+        <span class="format-chip">TIFF / BMP</span>
+        <span class="format-chip">DOCX</span>
+        <span class="format-chip">Max 50 MB</span>
+      </div>
+    </div>
+
+    <!-- File Info -->
+    <div class="file-info" id="fileInfo">
+      <div class="file-type-icon" id="fileTypeIcon">PDF</div>
+      <div class="file-meta">
+        <div class="file-name" id="fileName">filename.pdf</div>
+        <div class="file-size" id="fileSize">0 KB</div>
+      </div>
+      <button class="file-remove" id="removeFile" title="Remove file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Error Box -->
+    <div class="error-box" id="errorBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="errorText"></span>
+    </div>
+
+    <!-- Analyze Button -->
+    <button class="analyze-btn" id="analyzeBtn" disabled>
+      <div class="spinner"></div>
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      </span>
+      <span class="btn-label">Analyze Report</span>
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div id="results"></div>
+
+</div><!-- /container -->
+
+<script>
+const dropZone    = document.getElementById('dropZone');
+const fileInput   = document.getElementById('fileInput');
+const fileInfo    = document.getElementById('fileInfo');
+const fileName    = document.getElementById('fileName');
+const fileSize    = document.getElementById('fileSize');
+const fileTypeIcon = document.getElementById('fileTypeIcon');
+const removeFile  = document.getElementById('removeFile');
+const analyzeBtn  = document.getElementById('analyzeBtn');
+const errorBox    = document.getElementById('errorBox');
+const errorText   = document.getElementById('errorText');
+const resultsDiv  = document.getElementById('results');
+const step1       = document.getElementById('step1');
+const step2       = document.getElementById('step2');
+const step3       = document.getElementById('step3');
+
+let selectedFile = null;
+let lastSummary = null;
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function getFileTypeInfo(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const mime = file.type;
+  if (mime === 'application/pdf' || ext === 'pdf') return { label: 'PDF', cls: 'file-type-pdf' };
+  if (['jpg','jpeg','png','tiff','tif','bmp','webp','gif'].includes(ext)) return { label: ext.toUpperCase(), cls: 'file-type-img' };
+  return { label: 'DOC', cls: 'file-type-doc' };
+}
+
+function selectFile(file) {
+  selectedFile = file;
+  const info = getFileTypeInfo(file);
+  fileName.textContent = file.name;
+  fileSize.textContent = formatBytes(file.size);
+  fileTypeIcon.textContent = info.label;
+  fileTypeIcon.className = 'file-type-icon ' + info.cls;
+  fileInfo.classList.add('visible');
+  dropZone.classList.add('has-file');
+  analyzeBtn.disabled = false;
+  hideError();
+  resetSteps();
+}
+
+function clearFile() {
+  selectedFile = null;
+  lastSummary = null;
+  fileInput.value = '';
+  fileInfo.classList.remove('visible');
+  dropZone.classList.remove('has-file');
+  analyzeBtn.disabled = true;
+  hideError();
+  resetSteps();
+  resultsDiv.style.display = 'none';
+  resultsDiv.innerHTML = '';
+}
+
+function showError(msg) {
+  errorText.textContent = msg;
+  errorBox.classList.add('visible');
+}
+
+function hideError() { errorBox.classList.remove('visible'); }
+
+function resetSteps() {
+  [step1, step2, step3].forEach(s => { s.className = 'step'; s.querySelector('.step-num').textContent = s.id.replace('step',''); });
+  step1.classList.add('active');
+}
+
+function setStep(n) {
+  [step1, step2, step3].forEach((s, i) => {
+    const num = i + 1;
+    if (num < n) {
+      s.classList.remove('active','step-processing');
+      s.classList.add('done');
+      s.querySelector('.step-num').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+    } else if (num === n) {
+      s.className = 'step active step-processing';
+      s.querySelector('.step-num').textContent = num;
+    } else {
+      s.className = 'step';
+      s.querySelector('.step-num').textContent = num;
+    }
+  });
+}
+
+// Drag & drop
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) selectFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+});
+removeFile.addEventListener('click', e => { e.stopPropagation(); clearFile(); });
+
+// Analyze
+analyzeBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+
+  analyzeBtn.disabled = true;
+  analyzeBtn.classList.add('loading');
+  hideError();
+  resultsDiv.style.display = 'none';
+
+  setStep(2);
+  await new Promise(r => setTimeout(r, 600));
+  setStep(3);
+
+  try {
+    const form = new FormData();
+    form.append('report', selectedFile);
+
+    const res = await fetch('/analyze', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok || data.error) throw new Error(data.error || 'Analysis failed.');
+
+    // Mark all steps done
+    [step1, step2, step3].forEach((s, i) => {
+      s.className = 'step done';
+      s.querySelector('.step-num').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+    });
+
+    renderResults(data);
+  } catch (err) {
+    showError(err.message);
+    resetSteps();
+  } finally {
+    analyzeBtn.disabled = false;
+    analyzeBtn.classList.remove('loading');
+  }
+});
+
+// ── HTML helpers ──
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Parse an AI-prefixed item — returns { isAI, text }
+function parseAI(text) {
+  const prefixes = ['[AI Assessment]', '[AI Suggested]', '[AI Recommended]', '[AI Inferred]'];
+  for (const p of prefixes) {
+    if (text && text.startsWith(p)) {
+      return { isAI: true, text: text.slice(p.length).replace(/^[:\s]+/, '') };
+    }
+  }
+  return { isAI: false, text: text || '' };
+}
+
+function aiChip() {
+  return `<span class="ai-item-badge">AI Inferred</span>`;
+}
+
+function renderResults(data) {
+  lastSummary = data.summary || null;
+  const s = data.summary || {};
+  const pi = s.patientInfo || {};
+  const urgency = s.urgencyLevel || 'NORMAL';
+  const quality = s.dataQuality || 'COMPLETE';
+  const inferred = new Set(s.aiInferredFields || []);
+
+  const urgencyConfig = {
+    NORMAL:    { label: 'Results within normal range', sub: 'No critical values detected', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+    ATTENTION: { label: 'Attention Required', sub: 'Abnormal values detected — review findings', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>` },
+    URGENT:    { label: 'URGENT — Immediate Action Required', sub: 'Critical values detected — escalate immediately', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` },
+  };
+
+  const uc = urgencyConfig[urgency] || urgencyConfig.NORMAL;
+
+  const methodLabel = data.extractionMethod === 'vision-ocr' ? 'Vision OCR' : data.extractionMethod === 'partial-digital' ? 'Partial Extract' : 'Digital Extract';
+  const methodIcon = data.extractionMethod === 'vision-ocr'
+    ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`
+    : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+
+  // ── Critical values — hidden when empty
+  const hasCritical = (s.criticalValues || []).length > 0;
+  const criticalHtml = hasCritical
+    ? s.criticalValues.map(v => `<div class="critical-item">${esc(v)}</div>`).join('')
+    : '';
+
+  // ── Key Findings
+  const findingsHtml = (s.keyFindings || []).length
+    ? `<ul class="findings-list">${s.keyFindings.map(f => `<li>${esc(f)}</li>`).join('')}</ul>`
+    : `<p class="empty-state">No specific findings extracted</p>`;
+
+  // ── Recommendations — support AI-inferred items
+  const recsHtml = (() => {
+    const recs = s.recommendations || [];
+    if (!recs.length) return `<p class="empty-state">No recommendations available</p>`;
+    return `<ul class="recs-list">${recs.map(r => {
+      const { isAI, text } = parseAI(r);
+      if (isAI) return `<li class="ai-item">${esc(text)} ${aiChip()}</li>`;
+      return `<li>${esc(text)}</li>`;
+    }).join('')}</ul>`;
+  })();
+
+  // ── Medications — support AI-inferred items
+  const medsHtml = (() => {
+    const meds = s.medications || [];
+    if (!meds.length) return `<p class="empty-state">None listed in report</p>`;
+    return `<div class="med-list">${meds.map(m => {
+      const { isAI, text } = parseAI(m);
+      const medIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.56 2.9A7 7 0 0119 15l-5 5-9-9 .56-3.1z"/><path d="M14.5 9.5l-5 5"/></svg>`;
+      if (isAI) return `<span class="ai-med-tag">${medIcon}${esc(text)} ${aiChip()}</span>`;
+      return `<span class="med-tag">${medIcon}${esc(text)}</span>`;
+    }).join('')}</div>`;
+  })();
+
+  // ── Diagnosis — support AI-inferred
+  const diagParsed = parseAI(s.diagnosis || '');
+  const diagHtml = diagParsed.isAI
+    ? `<div class="diagnosis-ai">${esc(diagParsed.text)} ${aiChip()}</div>`
+    : `<div class="diagnosis-box">${esc(diagParsed.text || 'Not stated in report')}</div>`;
+
+  // ── Lab Values Table
+  const labs = s.labValues || [];
+  const labHtml = labs.length ? `
+    <table class="lab-table" style="margin:0">
+      <thead>
+        <tr>
+          <th>Test</th><th>Result</th><th>Unit</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${labs.map(l => `
+          <tr>
+            <td><strong>${esc(l.test)}</strong></td>
+            <td>${esc(l.value)}</td>
+            <td style="color:var(--gray-400)">${esc(l.unit || '—')}</td>
+            <td><span class="lab-status status-${(l.status||'unknown').toLowerCase()}">${esc((l.status||'—').toUpperCase())}</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>` : `<p class="empty-state" style="padding:16px 18px">No lab values identified</p>`;
+
+  const qualityColors = { COMPLETE: 'quality-HIGH', PARTIAL: 'quality-PARTIAL', LIMITED: 'quality-LIMITED' };
+
+  // ── AI inferred chip for card headers
+  const sectionChip = (field) => inferred.has(field)
+    ? `<span class="ai-chip"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>AI</span>`
+    : '';
+
+  // ── Show indicator if any fields were inferred
+  const anyInferred = inferred.size > 0;
+
+  resultsDiv.innerHTML = `
+    <!-- Urgency Banner -->
+    <div class="urgency-bar urgency-${urgency}">
+      <div class="urgency-icon">${uc.icon}</div>
+      <div class="urgency-text">
+        <h3>${uc.label}</h3>
+        <p>${uc.sub}</p>
+      </div>
+      <div class="urgency-meta">
+        <span class="meta-pill meta-pill-gray">${esc(data.fileName)}</span>
+        <span class="meta-pill meta-pill-blue">${methodIcon}&nbsp;${methodLabel}</span>
+        <span class="meta-pill meta-pill ${qualityColors[quality] || 'quality-HIGH'}">${quality} DATA</span>
+      </div>
+    </div>
+
+    <!-- Summary (full width) -->
+    <div class="results-grid">
+      <div class="card col-12">
+        <div class="card-header">
+          <div class="card-header-icon icon-blue">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <span class="card-title">Clinical Summary</span>
+        </div>
+        <div class="card-body">
+          <p class="summary-text">${esc(s.summary || 'No summary available.')}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Patient Info + (Critical Values if any) + Diagnosis -->
+    <div class="results-grid">
+      <div class="card ${hasCritical ? 'col-4' : 'col-5'}">
+        <div class="card-header">
+          <div class="card-header-icon icon-teal">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span class="card-title">Patient Info</span>
+        </div>
+        <div class="card-body">
+          <div class="report-type-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+            ${esc(s.reportType || 'Medical Document')}
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Patient Name</div>
+              <div class="info-value prominent">${esc(pi.name || 'Not found')}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Age / DOB</div>
+              <div class="info-value">${esc(pi.ageOrDob || 'Not found')}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Patient ID / MRN</div>
+              <div class="info-value">${esc(pi.id || 'Not found')}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Gender</div>
+              <div class="info-value">${esc(pi.gender || 'Not found')}</div>
+            </div>
+            <div class="info-item col-span-2" style="grid-column:1/-1">
+              <div class="info-label">Report Date</div>
+              <div class="info-value">${esc(pi.reportDate || 'Not found')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${hasCritical ? `
+      <div class="card col-4">
+        <div class="card-header">
+          <div class="card-header-icon icon-red">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          </div>
+          <span class="card-title">Critical Values</span>
+          <span class="card-badge" style="background:var(--red-light);color:var(--red)">${s.criticalValues.length}</span>
+        </div>
+        <div class="card-body">${criticalHtml}</div>
+      </div>` : ''}
+
+      <div class="card ${hasCritical ? 'col-4' : 'col-7'}">
+        <div class="card-header">
+          <div class="card-header-icon icon-orange">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <span class="card-title">Diagnosis / Assessment</span>
+          ${sectionChip('diagnosis')}
+        </div>
+        <div class="card-body">${diagHtml}</div>
+      </div>
+    </div>
+
+    <!-- Row 3: Findings + Medications -->
+    <div class="results-grid">
+      <div class="card col-6">
+        <div class="card-header">
+          <div class="card-header-icon icon-blue">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          </div>
+          <span class="card-title">Key Findings</span>
+          ${(s.keyFindings||[]).length ? `<span class="card-badge" style="background:var(--blue-light);color:var(--blue)">${s.keyFindings.length}</span>` : ''}
+        </div>
+        <div class="card-body">${findingsHtml}</div>
+      </div>
+
+      <div class="card col-6">
+        <div class="card-header">
+          <div class="card-header-icon icon-purple">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M8.56 2.9A7 7 0 0119 15l-5 5-9-9 .56-3.1z"/><path d="M14.5 9.5l-5 5"/></svg>
+          </div>
+          <span class="card-title">Medications</span>
+          ${sectionChip('medications')}
+          ${(s.medications||[]).length ? `<span class="card-badge" style="background:#F3E8FF;color:#7C3AED">${s.medications.length}</span>` : ''}
+        </div>
+        <div class="card-body">${medsHtml}</div>
+      </div>
+    </div>
+
+    <!-- Row 4: Lab Values + Recommendations -->
+    <div class="results-grid">
+      <div class="card col-7">
+        <div class="card-header">
+          <div class="card-header-icon icon-teal">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+          </div>
+          <span class="card-title">Lab Values</span>
+          ${(s.labValues||[]).length ? `<span class="card-badge" style="background:var(--teal-light);color:var(--teal)">${s.labValues.length}</span>` : ''}
+        </div>
+        <div class="lab-table-scroll">${labHtml}</div>
+      </div>
+
+      <div class="card col-5">
+        <div class="card-header">
+          <div class="card-header-icon icon-green">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <span class="card-title">Recommendations</span>
+          ${sectionChip('recommendations')}
+        </div>
+        <div class="card-body">${recsHtml}</div>
+      </div>
+    </div>
+
+    <!-- Raw Text Accordion -->
+    <div class="raw-accordion">
+      <button class="raw-toggle" id="rawToggle">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-500)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="raw-toggle-title">Extracted Report Text</span>
+        <span class="raw-chars">${(data.extractedText||'').length.toLocaleString()} characters</span>
+        <svg class="raw-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="raw-body" id="rawBody">
+        <pre>${esc(data.extractedText || '')}</pre>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer-box">
+      <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <div class="disclaimer-content">
+        <div class="disclaimer-text"><strong>Medical Disclaimer:</strong> AI-generated analysis for licensed healthcare professionals only. Always verify with a qualified physician before any clinical action or medication.</div>
+      </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <button class="btn-action btn-outline" id="copyBtn" onclick="copySummary()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy Summary
+      </button>
+      <button class="btn-action btn-outline" onclick="window.print()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print Report
+      </button>
+      <button class="btn-action btn-primary-sm" onclick="newReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Report
+      </button>
+    </div>
+  `;
+
+  // Wire up accordion
+  const rawToggle = document.getElementById('rawToggle');
+  const rawBody = document.getElementById('rawBody');
+  rawToggle.addEventListener('click', () => {
+    rawBody.classList.toggle('visible');
+    rawToggle.classList.toggle('open');
+  });
+
+  resultsDiv.style.display = 'block';
+  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function newReport() {
+  clearFile();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function copySummary() {
+  try {
+    const s = lastSummary;
+    const pi = s.patientInfo || {};
+    const inferred = s.aiInferredFields || [];
+    const lines = [
+      `NEURAL HUB — CLINICAL SUMMARY`,
+      `${'─'.repeat(40)}`,
+      `Patient: ${pi.name || 'Unknown'} | ${pi.ageOrDob || ''} | ${pi.reportDate || ''}`,
+      `Report Type: ${s.reportType || 'Medical Document'}`,
+      `Urgency: ${s.urgencyLevel || 'NORMAL'}`,
+      inferred.length ? `AI-Inferred Sections: ${inferred.join(', ')}` : '',
+      '',
+      `SUMMARY`,
+      s.summary || '',
+      '',
+      `DIAGNOSIS${inferred.includes('diagnosis') ? ' [AI Inferred]' : ''}: ${(s.diagnosis || 'Not stated').replace(/^\[AI Assessment\][:\s]*/,'').replace(/^\[AI Inferred\][:\s]*/,'')}`,
+      '',
+    ];
+
+    if ((s.criticalValues||[]).length) {
+      lines.push('CRITICAL VALUES:');
+      s.criticalValues.forEach(v => lines.push(`  ⚠ ${v}`));
+      lines.push('');
+    }
+
+    if ((s.keyFindings||[]).length) {
+      lines.push('KEY FINDINGS:');
+      s.keyFindings.forEach(f => lines.push(`  • ${f}`));
+      lines.push('');
+    }
+
+    if ((s.medications||[]).length) {
+      const medsLabel = inferred.includes('medications') ? 'SUGGESTED MEDICATIONS [AI Inferred]' : 'MEDICATIONS';
+      lines.push(medsLabel + ':');
+      s.medications.forEach(m => lines.push(`  Rx ${m.replace(/^\[AI Suggested\][:\s]*/,'')}`));
+      lines.push('');
+    }
+
+    if ((s.recommendations||[]).length) {
+      const recLabel = inferred.includes('recommendations') ? 'RECOMMENDATIONS [AI Inferred]' : 'RECOMMENDATIONS';
+      lines.push(recLabel + ':');
+      s.recommendations.forEach(r => lines.push(`  → ${r.replace(/^\[AI Recommended\][:\s]*/,'')}`));
+      lines.push('');
+    }
+
+    lines.push('─'.repeat(40));
+    lines.push('DISCLAIMER: This AI-generated summary is for licensed healthcare professionals only.');
+    lines.push('Do not act on these results without review by a qualified doctor or healthcare provider.');
+
+    await navigator.clipboard.writeText(lines.filter(l => l !== undefined).join('\n'));
+    const btn = document.getElementById('copyBtn');
+    if (btn) {
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => {
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Summary`;
+      }, 2000);
+    }
+  } catch (_) {}
+}
+</script>
+</body>
+</html>
