@@ -15,7 +15,9 @@ const PORT = process.env.PORT || 3000;
 await fs.mkdir(path.join(__dirname, 'uploads'), { recursive: true });
 
 if (!process.env.OPENAI_API_KEY) {
-  console.error('ERROR: OPENAI_API_KEY not set in .env file.');
+  console.error('ERROR: OPENAI_API_KEY environment variable is not set.');
+  console.error('  Local: add it to your .env file');
+  console.error('  Railway/Render: add it in the Variables tab of your service');
   process.exit(1);
 }
 
