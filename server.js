@@ -6,10 +6,10 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import OpenAI from 'openai';
 import { extractFile } from '@kreuzberg/node';
+import pdfParse from 'pdf-parse';
 import 'dotenv/config';
 
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 const mammoth = require('mammoth');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
