@@ -2,10 +2,14 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, createRequire } from 'url';
 import OpenAI from 'openai';
 import { extractFile } from '@kreuzberg/node';
 import 'dotenv/config';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+const mammoth = require('mammoth');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -151,14 +155,40 @@ async function performVisionOCR(filePath, mimeType, attempt = 0) {
   return content;
 }
 
-// ─── Kreuzberg Text Extraction ───────────────────────────────────────────────
+// ─── Text Extraction Helpers ─────────────────────────────────────────────────
 
 async function extractWithKreuzberg(filePath, mimeType) {
   try {
-    const result = await extractFile(filePath, mimeType, { disableOcr: true });
+    const result = await extractFile(filePath, mimeType, { disableOcr: false });
     return result.content || '';
+  } catch (_err) {
+    try {
+      const result = await extractFile(filePath, mimeType, { disableOcr: true });
+      return result.content || '';
+    } catch (err2) {
+      console.warn('  Kreuzberg warning:', err2.message);
+      return '';
+    }
+  }
+}
+
+async function extractPdfText(filePath) {
+  try {
+    const buffer = await fs.readFile(filePath);
+    const data = await pdfParse(buffer);
+    return data.text || '';
   } catch (err) {
-    console.warn('  Kreuzberg extraction warning:', err.message);
+    console.warn('  pdf-parse warning:', err.message);
+    return '';
+  }
+}
+
+async function extractDocxText(filePath) {
+  try {
+    const result = await mammoth.extractRawText({ path: filePath });
+    return result.value || '';
+  } catch (err) {
+    console.warn('  mammoth warning:', err.message);
     return '';
   }
 }
@@ -265,29 +295,41 @@ app.post('/analyze', upload.single('report'), async (req, res) => {
       extractedText = await performVisionOCR(tempPath, file.mimetype);
       extractionMethod = 'vision-ocr';
     } else {
-      console.log('  Step 1: Digital text extraction...');
+      console.log('  Step 1: Document text extraction (Kreuzberg)...');
       extractedText = await extractWithKreuzberg(tempPath, file.mimetype);
 
-      if (extractedText.trim().length < 120) {
-        console.log('  Step 1b: Insufficient text — attempting vision OCR for scanned document...');
-        try {
-          extractedText = await performVisionOCR(tempPath, 'image/jpeg');
-          extractionMethod = 'vision-ocr';
-        } catch (visionErr) {
-          if (extractedText.trim().length > 10) {
-            extractionMethod = 'partial-digital';
-          } else {
-            return res.status(422).json({
-              error: 'This appears to be a scanned PDF with no selectable text. For best results, please export each page as a JPG or PNG image and upload that instead.',
-            });
-          }
+      // PDF fallback: pdf-parse (pure JS, no native deps)
+      if (extractedText.trim().length < 120 && file.mimetype === 'application/pdf') {
+        console.log('  Step 1b: Trying pdf-parse fallback...');
+        const pdfText = await extractPdfText(tempPath);
+        if (pdfText.trim().length > extractedText.trim().length) {
+          extractedText = pdfText;
+          extractionMethod = 'pdf-parse';
         }
+      }
+
+      // DOCX/DOC fallback: mammoth
+      if (
+        extractedText.trim().length < 120 &&
+        (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.mimetype === 'application/msword')
+      ) {
+        console.log('  Step 1b: Trying mammoth fallback...');
+        const docxText = await extractDocxText(tempPath);
+        if (docxText.trim().length > extractedText.trim().length) {
+          extractedText = docxText;
+          extractionMethod = 'mammoth';
+        }
+      }
+
+      if (!extractionMethod || extractionMethod === 'digital') {
+        extractionMethod = extractedText.trim().length > 10 ? 'digital' : 'minimal';
       }
     }
 
     if (!extractedText.trim()) {
       return res.status(422).json({
-        error: 'Could not extract readable text from this document. Please check the file quality and try again.',
+        error: 'Could not extract text from this document. Please check the file is not corrupted or password-protected and try again.',
       });
     }
 
