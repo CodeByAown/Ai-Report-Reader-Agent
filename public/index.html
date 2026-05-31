@@ -603,6 +603,7 @@
     .recs-list li::before { content: '→'; color: var(--teal); font-weight: 700; flex-shrink: 0; }
 
     /* Medications */
+    .meds-consult-note { font-size: 11px; color: var(--gray-500); margin-top: 10px; font-style: italic; }
     .med-list { display: flex; flex-wrap: wrap; gap: 7px; }
     .med-tag {
       display: inline-flex; align-items: center; gap: 5px;
@@ -1146,7 +1147,7 @@ function renderResults(data) {
       const medIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.56 2.9A7 7 0 0119 15l-5 5-9-9 .56-3.1z"/><path d="M14.5 9.5l-5 5"/></svg>`;
       if (isAI) return `<span class="ai-med-tag">${medIcon}${esc(text)} ${aiChip()}</span>`;
       return `<span class="med-tag">${medIcon}${esc(text)}</span>`;
-    }).join('')}</div>`;
+    }).join('')}</div><p class="meds-consult-note">Please consult with your doctor before taking any medication.</p>`;
   })();
 
   // ── Diagnosis — support AI-inferred
